@@ -44,47 +44,77 @@ function App() {
       <header className="header">
         <Logo />
         <h1>Fake News Detector</h1>
+        <p className="header-description">AI-powered news authenticity verification</p>
       </header>
       <div className="content">
-        <form onSubmit={handleSubmit} className="input-form">
+        <form onSubmit={handleSubmit} className="input-form" role="form" aria-label="News text analysis form">
+          <label htmlFor="news-text-input" className="visually-hidden">
+            Enter news text to analyze for authenticity
+          </label>
           <textarea
+            id="news-text-input"
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="Enter news text here to verify its authenticity..."
             rows="6"
             className="text-input"
+            aria-describedby="text-help"
+            aria-required="true"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                handleSubmit(e);
+              }
+            }}
           />
-          <button type="submit" className="check-button" disabled={loading}>
+          <div id="text-help" className="input-help">
+            Tip: Press Ctrl+Enter to submit, or use the button below
+          </div>
+          <button 
+            type="submit" 
+            className="check-button" 
+            disabled={loading}
+            aria-describedby="button-status"
+          >
             {loading ? 'Analyzing...' : 'Check Authenticity'}
           </button>
+          <div id="button-status" className="visually-hidden" aria-live="polite">
+            {loading ? 'Analysis in progress, please wait' : 'Ready to analyze text'}
+          </div>
         </form>
         
         {error && (
-          <div className="error-message">
+          <div className="error-message" role="alert" aria-live="assertive">
             <p>{error}</p>
           </div>
         )}
         
         {loading && (
-          <div className="loading-indicator">
-            <p>Analyzing text...</p>
+          <div className="loading-indicator" aria-live="polite" aria-label="Analysis in progress">
+            <div className="spinner" aria-hidden="true"></div>
+            <p>Analyzing text for authenticity...</p>
           </div>
         )}
         
         {result && !loading && (
-          <div className={`result-box ${getResultColor()}`}>
+          <div className={`result-box ${getResultColor()}`} role="region" aria-label="Analysis results">
             <h2 className="result-heading">Analysis Results</h2>
             <div className="result-item">
               <span className="result-label">Verdict:</span>
-              <span className="result-value">{result.prediction}</span>
+              <span className={`result-value ${result.prediction.toLowerCase()}-verdict`} role="status">
+                {result.prediction}
+              </span>
             </div>
             
             <div className="result-item probability-container">
               <span className="result-label">Confidence:</span>
-              <div className="probability-bars">
+              <div className="probability-bars" role="group" aria-label="Confidence levels">
                 <div className="probability-bar">
                   <div className="bar-label">Fake:</div>
-                  <div className="bar-container">
+                  <div className="bar-container" role="progressbar" 
+                       aria-valuenow={Math.round(result.probability[0] * 100)} 
+                       aria-valuemin="0" 
+                       aria-valuemax="100"
+                       aria-label={`Fake probability: ${(result.probability[0] * 100).toFixed(1)}%`}>
                     <div 
                       className="bar fake-bar" 
                       style={{width: `${result.probability[0] * 100}%`}}
@@ -94,7 +124,11 @@ function App() {
                 </div>
                 <div className="probability-bar">
                   <div className="bar-label">Real:</div>
-                  <div className="bar-container">
+                  <div className="bar-container" role="progressbar" 
+                       aria-valuenow={Math.round(result.probability[1] * 100)} 
+                       aria-valuemin="0" 
+                       aria-valuemax="100"
+                       aria-label={`Real probability: ${(result.probability[1] * 100).toFixed(1)}%`}>
                     <div 
                       className="bar real-bar" 
                       style={{width: `${result.probability[1] * 100}%`}}
